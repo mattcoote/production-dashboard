@@ -49,6 +49,20 @@ export default function BoardPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Board</h1>
           <p className="text-sm text-[var(--muted)]">Drag jobs between columns to update status</p>
+          <div className="flex gap-3 mt-2">
+            {[
+              { label: "Sample", color: "#a855f7" },
+              { label: "Test Print", color: "#f97316" },
+              { label: "Digital Work", color: "#ec4899" },
+              { label: "Custom Order", color: "#3b82f6" },
+              { label: "Production", color: "#6b7280" },
+            ].map((t) => (
+              <div key={t.label} className="flex items-center gap-1 text-[10px] text-[var(--muted)]">
+                <span className="w-2.5 h-1 rounded-full" style={{ backgroundColor: t.color }} />
+                {t.label}
+              </div>
+            ))}
+          </div>
         </div>
         <button
           onClick={fetchJobs}

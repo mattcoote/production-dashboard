@@ -33,6 +33,14 @@ const PROOF_COLORS: Record<string, string> = {
   "Revision Needed": "#ef4444",
 };
 
+const JOB_TYPE_COLORS: Record<string, string> = {
+  Sample: "#a855f7",
+  "Test Print": "#f97316",
+  "Digital Work": "#ec4899",
+  "Custom Order": "#3b82f6",
+  "Production Order": "#6b7280",
+};
+
 interface KanbanBoardProps {
   jobs: Job[];
   onStatusChange: (id: string, status: string) => void;
@@ -211,17 +219,19 @@ function JobCard({
   const isOverdue = deadline && deadline < today && job.status !== "Done";
   const pri = job.priority || "Normal";
   const proof = job.proofStatus || "Not Started";
+  const typeColor = JOB_TYPE_COLORS[job.jobType] || "#6b7280";
 
   return (
     <div
       onClick={onClick}
-      className={`rounded-lg border p-3 cursor-grab active:cursor-grabbing transition-shadow ${
+      className={`rounded-lg border p-3 cursor-grab active:cursor-grabbing transition-shadow border-l-[3px] ${
         isOverlay
           ? "shadow-2xl border-[var(--accent-blue)] bg-[var(--card)]"
           : isOverdue
           ? "border-[var(--accent-red)]/50 bg-[var(--card)] hover:shadow-md"
           : "border-[var(--border)] bg-[var(--card)] hover:shadow-md"
       }`}
+      style={{ borderLeftColor: typeColor }}
     >
       {/* Priority + Proof badges */}
       <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
@@ -269,6 +279,21 @@ function JobCard({
           {job.substrate && <span>{job.substrate}</span>}
           {job.substrate && job.qtyToProduce > 0 && <span> · </span>}
           {job.qtyToProduce > 0 && <span>Qty: {job.qtyToProduce}</span>}
+        </div>
+      )}
+
+      {/* Job type */}
+      {job.jobType && (
+        <div className="mt-1">
+          <span
+            className="text-[10px] px-1.5 py-0.5 rounded font-medium"
+            style={{
+              backgroundColor: `${typeColor}15`,
+              color: typeColor,
+            }}
+          >
+            {job.jobType}
+          </span>
         </div>
       )}
 
