@@ -7,14 +7,11 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
-  closestCenter,
+  useDroppable,
+  rectIntersection,
 } from "@dnd-kit/core";
-import type { DragStartEvent, DragEndEvent, DragOverEvent } from "@dnd-kit/core";
-import {
-  SortableContext,
-  verticalListSortingStrategy,
-  useSortable,
-} from "@dnd-kit/sortable";
+import type { DragStartEvent, DragEndEvent } from "@dnd-kit/core";
+import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { Job } from "@/lib/notion";
 
@@ -59,54 +56,40 @@ export default function KanbanBoard({
     setActiveId(event.active.id as string);
   };
 
-  const handleDragOver = (event: DragOverEvent) => {
-    const { active, over } = event;
-    if (!over) return;
-
-    const activeJob = jobs.find((j) => j.id === active.id);
-    if (!activeJob) return;
-
-    // Check if dropping over a column droppable
-    const overColumn = COLUMNS.find((c) => c.id === over.id);
-    if (overColumn && activeJob.status !== overColumn.id) {
-      onStatusChange(activeJob.id, overColumn.id);
-      return;
-    }
-
-    // Check if dropping over another card — use that card's column
-    const overJob = jobs.find((j) => j.id === over.id);
-    if (overJob && activeJob.status !== overJob.status) {
-      onStatusChange(activeJob.id, overJob.status);
-    }
-  };
-
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     setActiveId(null);
 
     if (!over) return;
 
-    const activeJob = jobs.find((j) => j.id === active.id);
-    if (!activeJob) return;
+    const draggedJob = jobs.find((j) => j.id === active.id);
+    if (!draggedJob) return;
 
+    // Determine which column was dropped on
+    let targetStatus: string | null = null;
+
+    // Dropped on a column directly
     const overColumn = COLUMNS.find((c) => c.id === over.id);
-    if (overColumn && activeJob.status !== overColumn.id) {
-      onStatusChange(activeJob.id, overColumn.id);
-      return;
+    if (overColumn) {
+      targetStatus = overColumn.id;
+    } else {
+      // Dropped on a card — use that card's status
+      const overJob = jobs.find((j) => j.id === over.id);
+      if (overJob) {
+        targetStatus = overJob.status;
+      }
     }
 
-    const overJob = jobs.find((j) => j.id === over.id);
-    if (overJob && activeJob.status !== overJob.status) {
-      onStatusChange(activeJob.id, overJob.status);
+    if (targetStatus && draggedJob.status !== targetStatus) {
+      onStatusChange(draggedJob.id, targetStatus);
     }
   };
 
   return (
     <DndContext
       sensors={sensors}
-      collisionDetection={closestCenter}
+      collisionDetection={rectIntersection}
       onDragStart={handleDragStart}
-      onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
     >
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 min-h-[60vh]">
@@ -138,9 +121,8 @@ function Column({
   jobs: Job[];
   onSelectJob: (job: Job) => void;
 }) {
-  const { setNodeRef, isOver } = useSortable({
+  const { setNodeRef, isOver } = useDroppable({
     id: column.id,
-    data: { type: "column" },
   });
 
   return (
@@ -168,21 +150,16 @@ function Column({
 
       {/* Cards */}
       <div className="p-2 space-y-2 min-h-[200px]">
-        <SortableContext
-          items={jobs.map((j) => j.id)}
-          strategy={verticalListSortingStrategy}
-        >
-          {jobs.map((job) => (
-            <SortableJobCard
-              key={job.id}
-              job={job}
-              onSelect={() => onSelectJob(job)}
-            />
-          ))}
-        </SortableContext>
+        {jobs.map((job) => (
+          <DraggableJobCard
+            key={job.id}
+            job={job}
+            onSelect={() => onSelectJob(job)}
+          />
+        ))}
         {jobs.length === 0 && (
-          <div className="flex items-center justify-center h-24 text-xs text-[var(--muted)]">
-            Drop jobs here
+          <div className="flex items-center justify-center h-32 text-xs text-[var(--muted)] border-2 border-dashed border-[var(--border)] rounded-lg">
+            {isOver ? "Drop here" : "Drop jobs here"}
           </div>
         )}
       </div>
@@ -190,7 +167,7 @@ function Column({
   );
 }
 
-function SortableJobCard({
+function DraggableJobCard({
   job,
   onSelect,
 }: {
@@ -299,7 +276,7 @@ function JobCard({
       {job.fileLink && (
         <div className="mt-1.5">
           <span className="text-[10px] text-[var(--accent-blue)]">
-            📎 File attached
+            File attached
           </span>
         </div>
       )}
