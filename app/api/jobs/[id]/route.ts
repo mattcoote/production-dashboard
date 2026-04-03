@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { updateJobStatus, updateJobCompleted, updateJobNotes } from "@/lib/notion";
+import { updateJobStatus, updateJobCompleted, updateJobNotes, updateJobProofStatus, updateJobPriority } from "@/lib/notion";
 
 export async function PATCH(
   req: NextRequest,
@@ -18,6 +18,12 @@ export async function PATCH(
     }
     if (body.notes !== undefined) {
       await updateJobNotes(id, body.notes);
+    }
+    if (body.proofStatus !== undefined) {
+      await updateJobProofStatus(id, body.proofStatus);
+    }
+    if (body.priority !== undefined) {
+      await updateJobPriority(id, body.priority);
     }
 
     return NextResponse.json({ success: true });

@@ -80,6 +80,74 @@ export function StatusDonut({ jobs }: { jobs: Job[] }) {
   );
 }
 
+const PROOF_COLORS: Record<string, string> = {
+  "Not Started": "#6b7280",
+  "Proof Sent": "#f59e0b",
+  Approved: "#22c55e",
+  "Revision Needed": "#ef4444",
+};
+
+export function ProofStatusDonut({ jobs }: { jobs: Job[] }) {
+  const active = jobs.filter((j) => j.status !== "Done");
+  const data = Object.entries(
+    active.reduce<Record<string, number>>((acc, j) => {
+      const ps = j.proofStatus || "Not Started";
+      acc[ps] = (acc[ps] || 0) + 1;
+      return acc;
+    }, {})
+  ).map(([name, value]) => ({ name, value }));
+
+  if (data.length === 0) {
+    return <EmptyChart label="No active jobs" />;
+  }
+
+  return (
+    <div className="rounded-xl bg-[var(--card)] border border-[var(--border)] p-6">
+      <h3 className="text-sm font-medium text-[var(--muted)] mb-4">Proof Status</h3>
+      <div className="h-52">
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie
+              data={data}
+              cx="50%"
+              cy="50%"
+              innerRadius={55}
+              outerRadius={80}
+              paddingAngle={3}
+              dataKey="value"
+              stroke="none"
+            >
+              {data.map((entry) => (
+                <Cell key={entry.name} fill={PROOF_COLORS[entry.name] || "#6b7280"} />
+              ))}
+            </Pie>
+            <Tooltip
+              contentStyle={{
+                background: "#1a1d27",
+                border: "1px solid #2a2e3a",
+                borderRadius: "8px",
+                color: "#e5e7eb",
+              }}
+            />
+          </PieChart>
+        </ResponsiveContainer>
+      </div>
+      <div className="flex justify-center gap-3 mt-2 flex-wrap">
+        {data.map((d) => (
+          <div key={d.name} className="flex items-center gap-1.5 text-xs">
+            <span
+              className="w-2.5 h-2.5 rounded-full"
+              style={{ backgroundColor: PROOF_COLORS[d.name] }}
+            />
+            <span className="text-[var(--muted)]">{d.name}</span>
+            <span className="font-semibold">{d.value}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function CustomerBar({ jobs }: { jobs: Job[] }) {
   const counts = jobs.reduce<Record<string, number>>((acc, j) => {
     if (j.customer) acc[j.customer] = (acc[j.customer] || 0) + 1;

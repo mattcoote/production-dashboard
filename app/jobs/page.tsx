@@ -7,7 +7,7 @@ import JobDetail from "@/components/JobDetail";
 import type { Job } from "@/lib/notion";
 
 export default function JobsPage() {
-  const { jobs, loading, error, updateStatus, toggleComplete, updateNotes, fetchJobs } = useJobs();
+  const { jobs, loading, error, updateStatus, toggleComplete, updateNotes, updateProofStatus, updatePriority, fetchJobs } = useJobs();
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
 
   if (loading) {
@@ -60,6 +60,8 @@ export default function JobsPage() {
           onStatusChange={updateStatus}
           onToggleComplete={toggleComplete}
           onNotesChange={updateNotes}
+          onProofStatusChange={updateProofStatus}
+          onPriorityChange={updatePriority}
         />
       )}
     </div>

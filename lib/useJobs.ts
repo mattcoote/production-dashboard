@@ -65,6 +65,24 @@ export function useJobs() {
     });
   };
 
+  const updateProofStatus = async (id: string, proofStatus: string) => {
+    setJobs((prev) => prev.map((j) => (j.id === id ? { ...j, proofStatus } : j)));
+    await fetch(`/api/jobs/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ proofStatus }),
+    });
+  };
+
+  const updatePriority = async (id: string, priority: string) => {
+    setJobs((prev) => prev.map((j) => (j.id === id ? { ...j, priority } : j)));
+    await fetch(`/api/jobs/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ priority }),
+    });
+  };
+
   const addJob = async (data: Record<string, unknown>) => {
     const res = await fetch("/api/jobs", {
       method: "POST",
@@ -84,6 +102,8 @@ export function useJobs() {
     updateStatus,
     toggleComplete,
     updateNotes,
+    updateProofStatus,
+    updatePriority,
     addJob,
   };
 }

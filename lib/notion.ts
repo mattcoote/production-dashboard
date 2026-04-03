@@ -26,6 +26,12 @@ export interface Job {
   notes: string;
   completed: boolean;
   notionUrl: string;
+  fileLink: string;
+  proofStatus: string;
+  colorProfile: string;
+  ripNotes: string;
+  priority: string;
+  specialInstructions: string;
 }
 
 function getText(page: PageObjectResponse, prop: string): string {
@@ -33,6 +39,12 @@ function getText(page: PageObjectResponse, prop: string): string {
   if (!p) return "";
   if (p.type === "rich_text") return p.rich_text.map((t) => t.plain_text).join("");
   if (p.type === "title") return p.title.map((t) => t.plain_text).join("");
+  return "";
+}
+
+function getUrl(page: PageObjectResponse, prop: string): string {
+  const p = page.properties[prop];
+  if (p?.type === "url" && p.url) return p.url;
   return "";
 }
 
@@ -85,6 +97,12 @@ function pageToJob(page: PageObjectResponse): Job {
     notes: getText(page, "Notes"),
     completed: getCheckbox(page, "Completed"),
     notionUrl: page.url,
+    fileLink: getUrl(page, "File Link"),
+    proofStatus: getSelect(page, "Proof Status"),
+    colorProfile: getText(page, "Color Profile"),
+    ripNotes: getText(page, "RIP Notes"),
+    priority: getSelect(page, "Priority"),
+    specialInstructions: getText(page, "Special Instructions"),
   };
 }
 
@@ -148,6 +166,30 @@ export async function updateJobNotes(
   });
 }
 
+export async function updateJobProofStatus(
+  pageId: string,
+  proofStatus: string
+): Promise<void> {
+  await notion.pages.update({
+    page_id: pageId,
+    properties: {
+      "Proof Status": { select: { name: proofStatus } },
+    },
+  });
+}
+
+export async function updateJobPriority(
+  pageId: string,
+  priority: string
+): Promise<void> {
+  await notion.pages.update({
+    page_id: pageId,
+    properties: {
+      Priority: { select: { name: priority } },
+    },
+  });
+}
+
 export async function createJob(data: {
   jobName: string;
   jobType: string;
@@ -162,6 +204,12 @@ export async function createJob(data: {
   orderDate?: string | null;
   workcenters?: string[];
   lineItems?: string;
+  fileLink?: string;
+  proofStatus?: string;
+  colorProfile?: string;
+  ripNotes?: string;
+  priority?: string;
+  specialInstructions?: string;
 }): Promise<Job> {
   const properties: Record<string, unknown> = {
     "Job Name": { title: [{ text: { content: data.jobName } }] },
@@ -209,6 +257,30 @@ export async function createJob(data: {
   if (data.lineItems) {
     properties["Line Items"] = {
       rich_text: [{ type: "text", text: { content: data.lineItems } }],
+    };
+  }
+  if (data.fileLink) {
+    properties["File Link"] = { url: data.fileLink };
+  }
+  if (data.proofStatus) {
+    properties["Proof Status"] = { select: { name: data.proofStatus } };
+  }
+  if (data.colorProfile) {
+    properties["Color Profile"] = {
+      rich_text: [{ type: "text", text: { content: data.colorProfile } }],
+    };
+  }
+  if (data.ripNotes) {
+    properties["RIP Notes"] = {
+      rich_text: [{ type: "text", text: { content: data.ripNotes } }],
+    };
+  }
+  if (data.priority) {
+    properties["Priority"] = { select: { name: data.priority } };
+  }
+  if (data.specialInstructions) {
+    properties["Special Instructions"] = {
+      rich_text: [{ type: "text", text: { content: data.specialInstructions } }],
     };
   }
 

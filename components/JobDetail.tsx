@@ -9,12 +9,27 @@ const STATUS_COLORS: Record<string, string> = {
   Done: "#22c55e",
 };
 
+const PROOF_COLORS: Record<string, string> = {
+  "Not Started": "#6b7280",
+  "Proof Sent": "#f59e0b",
+  Approved: "#22c55e",
+  "Revision Needed": "#ef4444",
+};
+
+const PRIORITY_COLORS: Record<string, string> = {
+  Normal: "#6b7280",
+  Rush: "#f97316",
+  "Hot Rush": "#ef4444",
+};
+
 interface JobDetailProps {
   job: Job;
   onClose: () => void;
   onStatusChange: (id: string, status: string) => void;
   onToggleComplete: (id: string, completed: boolean) => void;
   onNotesChange: (id: string, notes: string) => void;
+  onProofStatusChange: (id: string, proofStatus: string) => void;
+  onPriorityChange: (id: string, priority: string) => void;
 }
 
 export default function JobDetail({
@@ -23,6 +38,8 @@ export default function JobDetail({
   onStatusChange,
   onToggleComplete,
   onNotesChange,
+  onProofStatusChange,
+  onPriorityChange,
 }: JobDetailProps) {
   const [notes, setNotes] = useState(job.notes);
   const [saving, setSaving] = useState(false);
@@ -39,7 +56,7 @@ export default function JobDetail({
         {/* Header */}
         <div className="flex items-start justify-between p-6 border-b border-[var(--border)]">
           <div>
-            <div className="flex items-center gap-2 mb-1">
+            <div className="flex items-center gap-2 mb-1 flex-wrap">
               {job.productionNbr && (
                 <span className="text-sm text-[var(--muted)]">#{job.productionNbr}</span>
               )}
@@ -52,6 +69,17 @@ export default function JobDetail({
               >
                 {job.status}
               </span>
+              {job.priority && job.priority !== "Normal" && (
+                <span
+                  className="text-xs px-2 py-0.5 rounded-full font-bold uppercase"
+                  style={{
+                    backgroundColor: `${PRIORITY_COLORS[job.priority]}20`,
+                    color: PRIORITY_COLORS[job.priority],
+                  }}
+                >
+                  {job.priority}
+                </span>
+              )}
             </div>
             <h2 className="text-xl font-bold">{job.jobName}</h2>
           </div>
@@ -82,6 +110,32 @@ export default function JobDetail({
               </select>
             </div>
             <div>
+              <label className="text-xs text-[var(--muted)] block mb-1">Priority</label>
+              <select
+                value={job.priority || "Normal"}
+                onChange={(e) => onPriorityChange(job.id, e.target.value)}
+                className="px-3 py-1.5 rounded-lg bg-[var(--background)] border border-[var(--border)] text-sm"
+              >
+                <option value="Normal">Normal</option>
+                <option value="Rush">Rush</option>
+                <option value="Hot Rush">Hot Rush</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-xs text-[var(--muted)] block mb-1">Proof</label>
+              <select
+                value={job.proofStatus || "Not Started"}
+                onChange={(e) => onProofStatusChange(job.id, e.target.value)}
+                className="px-3 py-1.5 rounded-lg bg-[var(--background)] border border-[var(--border)] text-sm"
+                style={{ color: PROOF_COLORS[job.proofStatus] }}
+              >
+                <option value="Not Started">Not Started</option>
+                <option value="Proof Sent">Proof Sent</option>
+                <option value="Approved">Approved</option>
+                <option value="Revision Needed">Revision Needed</option>
+              </select>
+            </div>
+            <div>
               <label className="text-xs text-[var(--muted)] block mb-1">Completed</label>
               <button
                 onClick={() => onToggleComplete(job.id, !job.completed)}
@@ -100,14 +154,8 @@ export default function JobDetail({
           <div className="grid grid-cols-2 gap-4">
             <Field label="Customer" value={job.customer} />
             <Field label="Job Type" value={job.jobType} />
-            <Field label="Order Nbr" value={job.orderNbr} />
-            <Field label="Customer PO" value={job.customerPO} />
             <Field label="Substrate" value={job.substrate} />
             <Field label="Qty to Produce" value={String(job.qtyToProduce)} />
-            <Field
-              label="Order Date"
-              value={job.orderDate ? new Date(job.orderDate).toLocaleDateString() : "—"}
-            />
             <Field
               label="Deadline"
               value={job.deadline ? new Date(job.deadline).toLocaleDateString() : "—"}
@@ -115,13 +163,52 @@ export default function JobDetail({
                 !!(job.deadline && new Date(job.deadline) < new Date() && job.status !== "Done")
               }
             />
+            <Field label="Color Profile" value={job.colorProfile} />
           </div>
+
+          {/* File Link */}
+          {job.fileLink && (
+            <div>
+              <label className="text-xs text-[var(--muted)] block mb-1.5">File Link</label>
+              <a
+                href={job.fileLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-sm text-[var(--accent-blue)] hover:underline"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                </svg>
+                Open Print File
+              </a>
+            </div>
+          )}
+
+          {/* RIP Notes */}
+          {job.ripNotes && (
+            <div>
+              <label className="text-xs text-[var(--muted)] block mb-1.5">RIP Notes</label>
+              <p className="text-sm bg-[var(--background)] rounded-lg p-3 border border-[var(--border)]">
+                {job.ripNotes}
+              </p>
+            </div>
+          )}
+
+          {/* Special Instructions */}
+          {job.specialInstructions && (
+            <div>
+              <label className="text-xs text-[var(--muted)] block mb-1.5">Special Instructions</label>
+              <div className="text-sm bg-[var(--accent-orange)]/5 border border-[var(--accent-orange)]/20 rounded-lg p-3 text-[var(--accent-orange)]">
+                {job.specialInstructions}
+              </div>
+            </div>
+          )}
 
           {/* Workcenters */}
           {job.workcenters.length > 0 && (
             <div>
               <label className="text-xs text-[var(--muted)] block mb-1.5">Workcenters</label>
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
                 {job.workcenters.map((wc) => (
                   <span
                     key={wc}

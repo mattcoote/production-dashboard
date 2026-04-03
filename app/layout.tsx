@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "GP Production Dashboard",
-  description: "Production tracking for General Public LLC",
+  title: "GP Specialty Production",
+  description: "Specialty production tracking for General Public LLC",
 };
 
 export default function RootLayout({

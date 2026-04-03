@@ -2,7 +2,7 @@
 
 import { useJobs } from "@/lib/useJobs";
 import StatusCard from "@/components/StatusCard";
-import { StatusDonut, CustomerBar, ThroughputChart } from "@/components/Charts";
+import { StatusDonut, CustomerBar, ThroughputChart, ProofStatusDonut } from "@/components/Charts";
 import Timeline from "@/components/Timeline";
 
 export default function DashboardPage() {
@@ -14,16 +14,10 @@ export default function DashboardPage() {
   const queued = jobs.filter((j) => j.status === "Queued").length;
   const inProgress = jobs.filter((j) => j.status === "In Progress").length;
   const overdue = jobs.filter(
-    (j) =>
-      j.status !== "Done" &&
-      j.deadline &&
-      new Date(j.deadline) < today
+    (j) => j.status !== "Done" && j.deadline && new Date(j.deadline) < today
   ).length;
-
-  const weekStart = new Date(today);
-  weekStart.setDate(weekStart.getDate() - weekStart.getDay());
-  const completedThisWeek = jobs.filter(
-    (j) => j.status === "Done" && j.deadline && new Date(j.deadline) >= weekStart
+  const rushCount = jobs.filter(
+    (j) => j.status !== "Done" && (j.priority === "Rush" || j.priority === "Hot Rush")
   ).length;
 
   if (loading) {
@@ -38,10 +32,7 @@ export default function DashboardPage() {
     return (
       <div className="flex flex-col items-center justify-center h-64 gap-3">
         <p className="text-[var(--accent-red)] text-sm">{error}</p>
-        <button
-          onClick={fetchJobs}
-          className="px-4 py-2 rounded-lg bg-[var(--card)] border border-[var(--border)] text-sm hover:bg-[var(--card-hover)]"
-        >
+        <button onClick={fetchJobs} className="px-4 py-2 rounded-lg bg-[var(--card)] border border-[var(--border)] text-sm hover:bg-[var(--card-hover)]">
           Retry
         </button>
       </div>
@@ -52,7 +43,7 @@ export default function DashboardPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Production Dashboard</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Specialty Production</h1>
           <p className="text-sm text-[var(--muted)]">{jobs.length} total jobs</p>
         </div>
         <button
@@ -84,15 +75,17 @@ export default function DashboardPage() {
           pulse
         />
         <StatusCard
-          label="Done This Week"
-          count={completedThisWeek}
-          color="var(--accent-green)"
-          icon="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+          label="Rush / Hot Rush"
+          count={rushCount}
+          color="var(--accent-orange)"
+          icon="M15.362 5.214A8.252 8.252 0 0112 21 8.25 8.25 0 016.038 7.047 8.287 8.287 0 009 9.601a8.983 8.983 0 013.361-6.867 8.21 8.21 0 003 2.48z"
+          pulse={rushCount > 0}
         />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatusDonut jobs={jobs} />
+        <ProofStatusDonut jobs={jobs} />
         <CustomerBar jobs={jobs} />
         <ThroughputChart jobs={jobs} />
       </div>
